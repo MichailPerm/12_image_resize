@@ -12,15 +12,28 @@ HEIGHT_INDEX = 1
 
 def add_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--filepath', help='path to original image file')
-    parser.add_argument('-w', '--width', help='With of result image. Optional. May be the only one.')
-    parser.add_argument('-ht', '--height', help='Height of result image. Optional. May be the only one.')
-    parser.add_argument('-s', '--scale', help='Scale of result image. Optional. Works only if width and height NOT presented.')
-    parser.add_argument('-o', '--output', help='Path to store result image. Optional. If not, file will be saved beside original')
+    parser.add_argument(
+        '-f', '--filepath',
+        help='path to original image file')
+    parser.add_argument(
+        '-w', '--width',
+        help='With of result image. Optional. May be the only one.')
+    parser.add_argument(
+        '-ht', '--height',
+        help='Height of result image. Optional. May be the only one.')
+    parser.add_argument(
+        '-s', '--scale',
+        help='Scale of result image. Optional. Must be only one!')
+    parser.add_argument(
+        '-o', '--output',
+        help='Path to store result image. Optional.')
     return parser.parse_args()
 
 
-def check_argument_presence_and_value(argument, argument_name, dictionary, type='int'):
+def check_argument_presence_and_value(argument,
+                                      argument_name,
+                                      dictionary,
+                                      type='int'):
     if argument and argument.isnumeric():
         if type == 'int':
             dictionary[argument_name] = int(argument)
@@ -38,9 +51,11 @@ def process_args(size_params):
         raise IOError
     check_argument_presence_and_value(args.width, 'width', size_params)
     check_argument_presence_and_value(args.height, 'height', size_params)
-    check_argument_presence_and_value(args.scale, 'scale', size_params, type='float')
-    if any(key in ['width', 'height'] for key in size_params.keys()) and 'scale' in size_params.keys():
-        raise AttributeError
+    check_argument_presence_and_value(args.scale,
+                                      'scale', size_params, type='float')
+    if any(key in ['width', 'height'] for key in size_params.keys()):
+        if 'scale' in size_params.keys():
+            raise AttributeError
     if args.output and not os.path.isdir(args.output):
         raise RuntimeError
     return args
@@ -53,7 +68,8 @@ def open_image(filepath):
 
 def compute_result_size(source_size, size_params):
     if 'scale' in size_params:
-        return (int(source_size['width'] * size_params['scale']), int(source_size['height'] * size_params['scale']),)
+        return (int(source_size['width'] * size_params['scale']),
+                int(source_size['height'] * size_params['scale']),)
     if 'width' in size_params and 'height' in size_params:
         print('Scale of source image will not be saved')
         return (size_params['width'], size_params['height'],)
@@ -83,7 +99,10 @@ def get_size_from_thumbnails(source_image):
 def save_image(args, resized_image, output_size):
     source_image_dirs, source_image_name = os.path.split(args.filepath)
     source_image_name_parts = source_image_name.split('.')
-    output_image_name = '{}__{}x{}.{}'.format(source_image_name_parts[0], output_size['width'], output_size['height'], source_image_name_parts[1])
+    output_image_name = '{}__{}x{}.{}'.format(source_image_name_parts[0],
+                                              output_size['width'],
+                                              output_size['height'],
+                                              source_image_name_parts[1])
     if not getattr(args, 'output'):
         output_path = source_image_dirs + '/' + output_image_name
         message = 'Image saved at {} as {}'.format(source_image_dirs, output_image_name)
