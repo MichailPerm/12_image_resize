@@ -40,29 +40,32 @@ def check_size_argument_presence_and_value(argument,
         elif arg_type == 'float':
             dictionary[argument_name] = float(argument)
     elif not argument:
-        return
+        return None
     elif not argument.isnumeric():
-        # raise TypeError
-        raise RuntimeError('Size arguments must be only numeric!')
+        raise RuntimeError()
 
 
 def check_and_process_args(size_params):
     args = add_arguments()
     if not os.path.isfile(args.filepath):
-        # raise IOError
-        raise RuntimeError('Presented file is not exists')
-    check_size_argument_presence_and_value(args.width, 'width', size_params)
-    check_size_argument_presence_and_value(args.height, 'height', size_params)
-    check_size_argument_presence_and_value(args.scale,
-                                           'scale', size_params, arg_type='float')
+        alarm_message = 'Presented file is not exists'
+        return alarm_message
+    try:
+        check_size_argument_presence_and_value(args.width, 'width', size_params)
+        check_size_argument_presence_and_value(args.height, 'height', size_params)
+        check_size_argument_presence_and_value(args.scale,
+                                               'scale', size_params, arg_type='float')
+    except RuntimeError:
+        alarm_message = 'Size arguments must be only numeric!'
+        return alarm_message
     if any(key in ['width', 'height'] for key in size_params.keys()):
         if 'scale' in size_params.keys():
-            # raise AttributeError
-            raise RuntimeError(
-                'Incompatible size arguments introduced. '
-                'Need arguments: width or height (or both), or scale only!')
+            alarm_message = 'Incompatible size arguments introduced. '
+            alarm_message += 'Need arguments: width or height (or both), or scale only!'
+            return alarm_message
     if args.output and not os.path.isdir(args.output):
-        raise RuntimeError('Path to store output file is not correct!')
+        alarm_message = 'Path to store output file is not correct!'
+        return alarm_message
     return args
 
 
@@ -140,31 +143,26 @@ def save_image(args, resized_image, output_size_dict):
     return output_params_dict['message']
 
 
+def process_image(args, size_params):
+    output_size_dict = {}
+    source_image = open_image(args.filepath)
+    source_size = get_size_from_source_image(source_image)
+    resized_image = resize_image(source_image,
+                                 source_size,
+                                 size_params,
+                                 output_size_dict)
+    source_image.close()
+    message = save_image(args, resized_image, output_size_dict)
+    return message
+
+
 if __name__ == '__main__':
     size_params = {}
-    output_size_dict = {}
-    try:
-        args = check_and_process_args(size_params)
-    # except IOError:
-    #     sys.exit()
-    # except AttributeError:
-    #     sys.exit()
-    # except TypeError:
-    #     sys.exit()
-    except RuntimeError:
-        sys.exit()
-    try:
-        source_image = open_image(args.filepath)
-        source_size = get_size_from_source_image(source_image)
-        resized_image = resize_image(source_image,
-                                     source_size,
-                                     size_params,
-                                     output_size_dict)
-        source_image.close()
-        message = save_image(args, resized_image, output_size_dict)
-        print_alert(message)
-    except PermissionError:
-        sys.exit('Something wrong with a file.'
-                 'Check if output path correct!')
-    except IOError:
-        sys.exit('Unable to open file {}!'.format(args.filepath))
+    args = check_and_process_args(size_params)
+    if type(args) == str:
+        sys.exit(args)
+
+    message = process_image(args, size_params)
+    print_alert(message)
+
+
