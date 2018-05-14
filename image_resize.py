@@ -33,31 +33,36 @@ def add_arguments():
 def check_size_argument_presence_and_value(argument,
                                            argument_name,
                                            dictionary,
-                                           type='int'):
+                                           arg_type='int'):
     if argument and argument.isnumeric():
-        if type == 'int':
+        if arg_type == 'int':
             dictionary[argument_name] = int(argument)
-        elif type == 'float':
+        elif arg_type == 'float':
             dictionary[argument_name] = float(argument)
     elif not argument:
         return
     elif not argument.isnumeric():
-        raise TypeError
+        # raise TypeError
+        raise RuntimeError('Size arguments must be only numeric!')
 
 
 def check_and_process_args(size_params):
     args = add_arguments()
     if not os.path.isfile(args.filepath):
-        raise IOError
+        # raise IOError
+        raise RuntimeError('Presented file is not exists')
     check_size_argument_presence_and_value(args.width, 'width', size_params)
     check_size_argument_presence_and_value(args.height, 'height', size_params)
     check_size_argument_presence_and_value(args.scale,
-                                           'scale', size_params, type='float')
+                                           'scale', size_params, arg_type='float')
     if any(key in ['width', 'height'] for key in size_params.keys()):
         if 'scale' in size_params.keys():
-            raise AttributeError
+            # raise AttributeError
+            raise RuntimeError(
+                'Incompatible size arguments introduced. '
+                'Need arguments: width or height (or both), or scale only!')
     if args.output and not os.path.isdir(args.output):
-        raise RuntimeError
+        raise RuntimeError('Path to store output file is not correct!')
     return args
 
 
@@ -76,17 +81,18 @@ def compute_result_size(source_size, size_params):
                 int(source_size['height'] * size_params['scale']),)
     if 'width' in size_params and 'height' in size_params:
         print_alert('Scale of source image will not be saved')
-        return (size_params['width'], size_params['height'], )
+        output_size_tuple = (size_params['width'], size_params['height'], )
     if 'width' in size_params:
         height = int((
                         size_params['width'] / source_size['width']
                      ) * source_size['height'])
-        return (size_params['width'], height,)
+        output_size_tuple = (size_params['width'], height,)
     if 'height' in size_params:
         width = int((
                         size_params['height'] / source_size['height']
                     ) * source_size['width'])
-        return (width, size_params['height'],)
+        output_size_tuple = (width, size_params['height'],)
+    return output_size_tuple
 
 
 def generate_output_size_dict(output_size_tuple, output_size_dict):
@@ -139,15 +145,14 @@ if __name__ == '__main__':
     output_size_dict = {}
     try:
         args = check_and_process_args(size_params)
-    except IOError:
-        sys.exit('Presented file is not exists')
-    except AttributeError:
-        sys.exit('Incompatible size arguments introduced. '
-                 'Need arguments: width or height (or both), or scale only!')
-    except TypeError:
-        sys.exit('Size arguments must be only numeric!')
+    # except IOError:
+    #     sys.exit()
+    # except AttributeError:
+    #     sys.exit()
+    # except TypeError:
+    #     sys.exit()
     except RuntimeError:
-        sys.exit('Path to store output file is not correct!')
+        sys.exit()
     try:
         source_image = open_image(args.filepath)
         source_size = get_size_from_source_image(source_image)
