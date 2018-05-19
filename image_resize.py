@@ -30,10 +30,10 @@ def add_arguments():
     return parser.parse_args()
 
 
-def check_size_argument_presence_and_value(argument,
-                                           argument_name,
-                                           dictionary,
-                                           arg_type='int'):
+def check_argument_type_and_value(argument,
+                                  argument_name,
+                                  dictionary,
+                                  arg_type='int'):
     if argument and argument.isnumeric():
         if arg_type == 'int':
             dictionary[argument_name] = int(argument)
@@ -45,31 +45,33 @@ def check_size_argument_presence_and_value(argument,
         raise RuntimeError()
 
 
-def check_and_process_args(size_params):
-    args = add_arguments()
-    if not os.path.isfile(args.filepath):
-        alarm_message = 'Presented file is not exists'
-        return alarm_message
+def check_size_arguments(args, size_params):
     try:
-        check_size_argument_presence_and_value(
+        check_argument_type_and_value(
             args.width, 'width', size_params)
-        check_size_argument_presence_and_value(
+        check_argument_type_and_value(
             args.height, 'height', size_params)
-        check_size_argument_presence_and_value(
+        check_argument_type_and_value(
             args.scale,
             'scale', size_params, arg_type='float')
+        return None
     except RuntimeError:
-        alarm_message = 'Size arguments must be only numeric!'
-        return alarm_message
-    if any(key in ['width', 'height'] for key in size_params.keys()):
-        if 'scale' in size_params.keys():
-            alarm_message = 'Incompatible size arguments introduced. '
-            alarm_message += 'Need arguments: width or height (or both),'
-            alarm_message += 'scale only!'
-            return alarm_message
+        return 'Size arguments must be only numeric!'
+
+
+def process_args(size_params):
+    args = add_arguments()
+    if not os.path.isfile(args.filepath):
+        return 'Presented file is not exists'
+    message = check_size_arguments(args, size_params)
+    if message:
+        return message
+    if any(
+            key in ['width', 'height'] for key in size_params.keys()
+    ) and 'scale' in size_params.keys():
+        return 'Need only scale or width or/and height'
     if args.output and not os.path.isdir(args.output):
-        alarm_message = 'Path to store output file is not correct!'
-        return alarm_message
+        return 'Path to store output file is not correct!'
     return args
 
 
@@ -131,11 +133,13 @@ def create_output_params_dict(args, output_size_dict):
         output_size_dict['height'],
         source_img_ext_part)
     if not getattr(args, 'output'):
-        output_params_dict['output_path'] = source_img_dirs + '/' + output_img_name
+        output_params_dict['output_path'] = os.path.join(
+            source_img_dirs, output_img_name)
         output_params_dict['message'] = 'img saved at {} as {}'.format(
             source_img_dirs, output_img_name)
     else:
-        output_params_dict['output_path'] = args.output + output_img_name
+        output_params_dict['output_path'] = os.path.join(
+            args.output, output_img_name)
         output_params_dict['message'] = 'img saved at {} as {}'.format(
             args.output, output_img_name)
     return output_params_dict
@@ -162,7 +166,7 @@ def process_img(args, size_params):
 
 if __name__ == '__main__':
     size_params = {}
-    args = check_and_process_args(size_params)
+    args = process_args(size_params)
     if type(args) == str:
         sys.exit(args)
     message = process_img(args, size_params)
