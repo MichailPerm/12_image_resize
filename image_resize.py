@@ -4,11 +4,7 @@ import os
 import sys
 
 
-WIDTH_INDEX = 0
-HEIGHT_INDEX = 1
-
-
-def add_arguments():
+def get_arguments():
     parser = argparse.ArgumentParser(
         epilog='REMEMBER! Too big size or scale may'
                'cause your computer freeze!')
@@ -17,12 +13,15 @@ def add_arguments():
         help='path to original img file')
     parser.add_argument(
         '-w', '--width',
+        type=int,
         help='With of result img. Optional. May be the only one.')
     parser.add_argument(
         '-ht', '--height',
+        type=int,
         help='Height of result img. Optional. May be the only one.')
     parser.add_argument(
         '-s', '--scale',
+        type=float,
         help='Scale of result img. Optional. Must be only one!')
     parser.add_argument(
         '-o', '--output',
@@ -30,42 +29,10 @@ def add_arguments():
     return parser.parse_args()
 
 
-def check_argument_type_and_value(argument,
-                                  argument_name,
-                                  dictionary,
-                                  arg_type='int'):
-    if argument and argument.isnumeric():
-        if arg_type == 'int':
-            dictionary[argument_name] = int(argument)
-        elif arg_type == 'float':
-            dictionary[argument_name] = float(argument)
-    elif not argument:
-        return None
-    elif not argument.isnumeric():
-        raise RuntimeError()
-
-
-def check_size_arguments(args, size_params):
-    try:
-        check_argument_type_and_value(
-            args.width, 'width', size_params)
-        check_argument_type_and_value(
-            args.height, 'height', size_params)
-        check_argument_type_and_value(
-            args.scale,
-            'scale', size_params, arg_type='float')
-        return None
-    except RuntimeError:
-        return 'Size arguments must be only numeric!'
-
-
 def process_args(size_params):
-    args = add_arguments()
+    args = get_arguments()
     if not os.path.isfile(args.filepath):
         return 'Presented file is not exists'
-    message = check_size_arguments(args, size_params)
-    if message:
-        return message
     if any(
             key in ['width', 'height'] for key in size_params.keys()
     ) and 'scale' in size_params.keys():
@@ -105,8 +72,7 @@ def compute_result_size(source_size, size_params):
 
 
 def generate_output_size_dict(output_size_tuple, output_size_dict):
-    output_size_dict['width'] = output_size_tuple[WIDTH_INDEX]
-    output_size_dict['height'] = output_size_tuple[HEIGHT_INDEX]
+    output_size_dict['width'], output_size_dict['height'] = output_size_tuple
 
 
 def resize_img(source_img, source_size, size_params, output_size_dict):
@@ -118,8 +84,7 @@ def resize_img(source_img, source_size, size_params, output_size_dict):
 
 def get_size_from_source_img(source_img):
     size = {}
-    size['width'] = source_img.size[WIDTH_INDEX]
-    size['height'] = source_img.size[HEIGHT_INDEX]
+    size['width'], size['height'] = source_img.size
     return size
 
 
