@@ -102,9 +102,9 @@ if __name__ == '__main__':
         sys.exit('Need only scale or width or/and height')
     if args.width and args.height:
         print('Scale of source img will not be saved')
-    result = check_paths(args)
-    if result:
-        sys.exit(result)
+    check_path_message = check_paths(args)
+    if check_path_message:
+        sys.exit(check_path_message)
     source_img = open_img(args.filepath)
     source_size = get_size_from_source_img(source_img)
     output_size_tuple = compute_result_size(source_size, args)
