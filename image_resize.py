@@ -64,11 +64,8 @@ def generate_output_size_dict(output_size_tuple, output_size_dict):
     output_size_dict['width'], output_size_dict['height'] = output_size_tuple
 
 
-def resize_img(source_img, source_size, args, output_size_dict):
-    output_size_tuple = compute_result_size(source_size, args)
-    generate_output_size_dict(output_size_tuple, output_size_dict)
-    resized_img = source_img.resize(output_size_tuple)
-    return resized_img
+def resize_img(source_img, output_size_tuple):
+    return source_img.resize(output_size_tuple)
 
 
 def get_size_from_source_img(source_img):
@@ -77,56 +74,42 @@ def get_size_from_source_img(source_img):
     return size
 
 
-def create_output_params_dict(args, output_size_dict):
-    output_params_dict = {}
+def create_output_params(args, output_size_tuple):
     source_img_dirs, source_img_name = os.path.split(args.filepath)
-    source_img_name_part, source_img_ext_part = source_img_name.split('.')
+    source_img_name_part, source_img_ext_part = os.path.split(source_img_name)
     output_img_name = '{}__{}x{}.{}'.format(
         source_img_name_part,
-        output_size_dict['width'],
-        output_size_dict['height'],
+        output_size_tuple[0],
+        output_size_tuple[1],
         source_img_ext_part)
     if not getattr(args, 'output'):
-        output_params_dict['output_path'] = os.path.join(
+        output_path = os.path.join(
             source_img_dirs, output_img_name)
-        output_params_dict['message'] = 'img saved at {} as {}'.format(
+        output_message = 'img saved at {} as {}'.format(
             source_img_dirs, output_img_name)
     else:
-        output_params_dict['output_path'] = os.path.join(
+        output_path = os.path.join(
             args.output, output_img_name)
-        output_params_dict['message'] = 'img saved at {} as {}'.format(
+        output_message = 'img saved at {} as {}'.format(
             args.output, output_img_name)
-    return output_params_dict
-
-
-def save_img(args, resized_img, output_size_dict):
-    output_params_dict = create_output_params_dict(args, output_size_dict)
-    resized_img.save(output_params_dict['output_path'])
-    return output_params_dict['message']
-
-
-def process_img(args):
-    output_size_dict = {}
-    source_img = open_img(args.filepath)
-    source_size = get_size_from_source_img(source_img)
-    resized_img = resize_img(source_img,
-                             source_size,
-                             args,
-                             output_size_dict)
-    source_img.close()
-    message = save_img(args, resized_img, output_size_dict)
-    return message
+    return output_message, output_path
 
 
 if __name__ == '__main__':
     size_params = {}
     args = get_arguments()
-    if args.width or args.height:
-        if args.scale:
-            sys.exit('Need only scale or width or/and height')
+    if (args.width or args.height) and args.scale:
+        sys.exit('Need only scale or width or/and height')
+    if args.width and args.height:
         print('Scale of source img will not be saved')
     result = check_paths(args)
     if result:
         sys.exit(result)
-    message = process_img(args)
+    source_img = open_img(args.filepath)
+    source_size = get_size_from_source_img(source_img)
+    output_size_tuple = compute_result_size(source_size, args)
+    resized_img = resize_img(source_img,
+                             output_size_tuple)
+    message, output_path = create_output_params(args, output_size_tuple)
+    resized_img.save(output_path)
     print(message)
