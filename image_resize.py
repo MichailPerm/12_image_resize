@@ -56,16 +56,15 @@ def compute_result_size(
         scale=None
 ):
     if scale:
-        return tuple([int(source_width * scale),
-                      int(source_height * scale)])
+        return int(source_width * scale), int(source_height * scale)
     if width and height:
-        return tuple([width, height])
+        return width, height
     if width:
         height = int((width / source_width) * source_height)
-        return tuple([width, height])
+        return width, height
     if height:
         width = int((height / source_height) * source_width)
-        return tuple([width, height])
+        return width, height
 
 
 def generate_output_size_dict(output_size_tuple, output_size_dict):
@@ -113,7 +112,7 @@ if __name__ == '__main__':
     valid_args = validate_args(argument_parser)
     source_img = open_img(valid_args.filepath)
     source_width, source_height = source_img.size
-    if not check_proportions(
+    if valid_args.width and valid_args.height and not check_proportions(
         source_width,
         source_height,
         valid_args.width,
