@@ -32,6 +32,8 @@ def get_arguments():
 def check_paths(args):
     if not os.path.isfile(args.filepath):
         return 'Presented file is not exists'
+    if (args.width or args.height) and args.scale:
+        sys.exit('Need only scale or width or/and height')
     if args.output and not os.path.isdir(args.output):
         return 'Path to store output file is not correct!'
     return None
@@ -97,14 +99,10 @@ def create_output_params(args, output_size_tuple):
 
 if __name__ == '__main__':
     size_params = {}
-    args = get_arguments()
-    if (args.width or args.height) and args.scale:
-        sys.exit('Need only scale or width or/and height')
+    par = get_arguments()
+    check_paths(args)
     if args.width and args.height:
         print('Scale of source img will not be saved')
-    check_path_message = check_paths(args)
-    if check_path_message:
-        sys.exit(check_path_message)
     source_img = open_img(args.filepath)
     source_size = get_size_from_source_img(source_img)
     output_size_tuple = compute_result_size(source_size, args)
