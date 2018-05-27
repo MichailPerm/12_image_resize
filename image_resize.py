@@ -3,7 +3,6 @@ from PIL import Image
 import os
 
 
-
 def get_parser():
     parser = argparse.ArgumentParser(
         epilog='REMEMBER! Too big size or scale may'
@@ -49,7 +48,13 @@ def open_img(filepath):
     return source_img
 
 
-def compute_result_size(source_width, source_height, width=None, height=None, scale=None):
+def compute_result_size(
+        source_width,
+        source_height,
+        width=None,
+        height=None,
+        scale=None
+):
     if scale:
         return tuple([int(source_width * scale),
                       int(source_height * scale)])
@@ -73,8 +78,10 @@ def resize_img(source_img, output_size_tuple):
 
 def calculate_output_path(args, output_size_tuple):
     source_img_dir, source_img_name = os.path.split(args.filepath)
-    source_img_name_part, source_img_ext_part = os.path.splitext(source_img_name)
-    output_img_name = '{}__{}x{}.{}'.format(
+    source_img_name_part, source_img_ext_part = os.path.splitext(
+        source_img_name
+    )
+    output_img_name = '{}__{}x{}{}'.format(
         source_img_name_part,
         output_size_tuple[0],
         output_size_tuple[1],
@@ -88,22 +95,38 @@ def calculate_output_path(args, output_size_tuple):
     return output_path
 
 
+def check_proportions(
+        source_width,
+        source_height,
+        args_width,
+        args_height
+    ):
+    if args_width and args_height:
+        if not source_width/args_width == source_height/args_height:
+            return None
+    return True
+
+
 if __name__ == '__main__':
     size_params = {}
     argument_parser = get_parser()
     valid_args = validate_args(argument_parser)
     source_img = open_img(valid_args.filepath)
     source_width, source_height = source_img.size
-    if valid_args.width and valid_args.height:
+    if not check_proportions(
+        source_width,
+        source_height,
+        valid_args.width,
+        valid_args.height
+    ):
         print('Scale of source img will not be saved')
-    output_size_tuple = compute_result_size(source_width,
-                                            source_height,
-                                            valid_args.width,
-                                            valid_args.height,
-                                            valid_args.scale)
-    resized_img = resize_img(source_img,
-                             output_size_tuple)
+    output_size_tuple = compute_result_size(
+        source_width,
+        source_height,
+        valid_args.width,
+        valid_args.height,
+        valid_args.scale)
+    resized_img = resize_img(source_img, output_size_tuple)
     output_path = calculate_output_path(valid_args, output_size_tuple)
     resized_img.save(output_path)
-    print(resized_img.info)
-
+    print('New file saved as {}'.format(output_path))
