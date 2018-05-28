@@ -100,9 +100,8 @@ def check_proportions(
         args_width,
         args_height
     ):
-    if args_width and args_height:
-        if not source_width/args_width == source_height/args_height:
-            return None
+    if not source_width/args_width == source_height/args_height:
+        return None
     return True
 
 
