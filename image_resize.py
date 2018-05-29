@@ -94,15 +94,13 @@ def calculate_output_path(args, output_size_tuple):
     return output_path
 
 
-def check_proportions(
+def is_preserve_aspect_ratio(
         source_width,
         source_height,
         args_width,
         args_height
     ):
-    if not source_width/args_width == source_height/args_height:
-        return None
-    return True
+    return int(source_width/args_width) == int(source_height/args_height)
 
 
 if __name__ == '__main__':
@@ -111,7 +109,7 @@ if __name__ == '__main__':
     valid_args = validate_args(argument_parser)
     source_img = open_img(valid_args.filepath)
     source_width, source_height = source_img.size
-    if valid_args.width and valid_args.height and not check_proportions(
+    if valid_args.width and valid_args.height and not is_preserve_aspect_ratio(
         source_width,
         source_height,
         valid_args.width,
